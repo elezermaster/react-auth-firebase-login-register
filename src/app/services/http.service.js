@@ -2,9 +2,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import configFile from "../config.json";
 
-axios.defaults.baseURL = configFile.apiEndpoint;
+// becase axios is global we need change instance
+//axios.defaults.baseURL = configFile.apiEndpoint;
+const httpAxios = axios.create({baseURL: configFile.apiEndpoint})
 
-axios.interceptors.request.use(
+httpAxios.interceptors.request.use(
     function (config) {
         if (configFile.isFirebase) {
             const containSlash = /\/$/gi.test(config.url)
@@ -24,7 +26,7 @@ function transformData(data) {
             })) : []
 }
 
-axios.interceptors.response.use(
+httpAxios.interceptors.response.use(
     (res) => {
         console.log(res.data)
         if (configFile.isFirebase) {
@@ -47,9 +49,9 @@ axios.interceptors.response.use(
     }
 );
 const httpService = {
-    get: axios.get,
-    post: axios.post,
-    put: axios.put,
-    delete: axios.delete
+    get: httpAxios.get,
+    post: httpAxios.post,
+    put: httpAxios.put,
+    delete: httpAxios.delete
 };
 export default httpService;
