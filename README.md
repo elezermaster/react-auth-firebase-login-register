@@ -1,74 +1,100 @@
-# in root folder project create config.json file
+#### in services folder project create localStorageService.js file
 
 ```javascript
 
-{
-    "apiEndpoint" : "put here link to your firebase project",
-    "isFirebase" : "true"
-}
+const TOKEN_KEY = 'jwt-token'
+const REFRESH_KEY = 'jwt-refresh-token'
+const EXPIRES_KEY = 'jwt-expires'
+
+    export function setTokens({refreshToken, idToken, expiresIn}) {
+        const expiresDate = new Date().getTime() + expiresIn * 1000;
+        localStorage.setItem(TOKEN_KEY, idToken)
+        localStorage.setItem(REFRESH_KEY, refreshToken)
+        localStorage.setItem(EXPIRES_KEY, expiresDate)
+    }
+
+    export function getAccessToken() {
+        return localStorage.getItem(TOKEN_KEY)
+    }
+
+    export function getRefreshToken() {
+        return localStorage.getItem(REFRESH_KEY)
+    }
+
+    export function getTokenExpiresDate() {
+        return localStorage.getItem(EXPIRES_KEY)
+    }
+
+    const localStorageService = {
+        setTokens,
+        getAccessToken,
+        getRefreshToken,
+        getTokenExpiresDate,
+    }
+
+    export default localStorageService;
+
 
 ```
 
-# then in cervices folder create http.service.js file
-## use axios.interceptors to config getting data from firebase
-## /\/$/gi.test(config.url) regular expression removes ending / from url
+#### in registerForm  connect to useAuth
 
 ```javascript
 
-import axios from "axios";
-import { toast } from "react-toastify";
-import configFile from "../config.json";
+import {useQualities} from '../../hooks/useQualities'
+import {useProfessions} from '../../hooks/useProfession'
+import {useAuth} from '../../hooks/useAuth'
+import {useHistory} from 'react-router-dom'
 
-axios.defaults.baseURL = configFile.apiEndpoint;
-
-axios.interceptors.request.use(
-    function (config) {
-        if (configFile.isFirebase) {
-            const containSlash = /\/$/gi.test(config.url)
-            config.url =
-                (containSlash ? config.url.slice(0, -1) : config.url) + ".json"
-        }
-        return config
-    },
-    function (error) {
-        return Promise.reject(error);
-    }
-);
+const RegisterForm = () => {
+    const history = useHistory();
+    const {signUp} = useAuth();
+    const [data, setData] = useState({
+        email: "",
+        password: "",
+        profession: "",
+        sex: "male",
+        qualities: [],
+        licence: false
+    });
 
 ```
 
 
-# transform data from firebase
-## axios.interceptors.response.use transform data from firebase
+#### in submit form 
 
 ```javascript
 
-function transformData(data) {
-    return data ? Object.keys(data).map(key => ({
-            ...data[key],
-            })) : []
-}
-
-axios.interceptors.response.use(
-    (res) => {
-        if (configFile.isFirebase) {
-            res.data = {content: transformData(res.data)}
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const isValid = validate();
+        if (!isValid) return;
+        const newData = {...data, qualities: data.qualities.map(q => q.value)}
+        try {
+           await signUp(newData);
+           history.push('/')
+        } catch (error) {
+            setErrors(error)
         }
-        return res
-    },
-    function (error) {
-        const expectedErrors =
-            error.response &&
-            error.response.status >= 400 &&
-            error.response.status < 500;
+    };
+```
 
-        if (!expectedErrors) {
-            console.log(error);
-            toast.error("Somthing was wrong. Try later");
+#### in login form 
+
+```javascript
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const isValid = validate();
+        if (!isValid) return;
+        console.log(data);
+        try {
+           await signIn(data);
+           history.push('/')
+        } catch (error) {
+            setErrors(error)
         }
-        return Promise.reject(error);
-    }
-);
+    };
 
 ```
 

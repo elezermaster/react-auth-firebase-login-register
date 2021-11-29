@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     }
     async function signIn({email, password, ...rest}) {
         //const apiKey = "AIzaSyAX8ORDX1fwi7yTR73kQKbWpktATUl8x2k"
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${process.env.REACT_APP_FIREBASE_KEY}`
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.REACT_APP_FIREBASE_KEY}`
 
         try {
             const {data} = await httpAuth.post(url, {email, password,returnSecureToken: true})
